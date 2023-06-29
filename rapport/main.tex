@@ -1,0 +1,223 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage[french]{babel}
+\usepackage{graphicx} 
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{amsmath} 
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\usepackage{array,booktabs,makecell,multirow}
+\usepackage{siunitx}
+\usepackage[left=2cm, right=2cm, bottom=2cm, top=2cm]{geometry}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+\begin{document}
+
+\begin{titlepage}
+
+\begin{center}
+\includegraphics[scale = 0.35]{logo.jpg}\\
+\vspace{1cm}
+\textsc{\huge Université de Liège}\\[1.2cm]
+\HRule \\[1cm]
+\textsc{\LARGE Structures des données et algorithmes (INFO0902-1) }\\[1cm]
+{\Huge \bfseries Projet 3: Résolution de problèmes}\\[1.4cm] 
+\HRule \\[1cm]
+\end{center}
+
+\begin{minipage}{0.45\linewidth}
+      \begin{flushleft} \large
+        \emph{Auteurs : } \\
+        Louis \textsc{Hogge}  s192814\\
+        Tom \textsc{Weber}  s203806
+      \end{flushleft}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\linewidth}
+      \begin{flushright} \large
+        \emph{Professeur : } P. \textsc{Geurts}\\
+        \emph{Année : } 2021-2022 
+      \end{flushright}
+\end{minipage}
+
+\end{titlepage}
+
+\newpage
+
+\section{DynamicTimeWraping}
+\subsection{Définition}
+Dans le cadre du Dynamic Time Warping, la fonction de coût, $d(x_i , y_j)$ qu'on cherche à minimiser est la distance moyenne absolue. Elle est définie ci-dessous :
+
+\[ d(x_i , y_j) = \frac{1}{2} \left( \mid x_{i,1} - y_{j,1} \mid +  \mid x_{i,2} - y_{j,2} \mid \right) \]
+
+\begin{itemize}
+    \item
+    \mbox{\boldmath$x_i$} : point \in $X = \langle x_1, ..., x_m \rangle$, $1^{ère}$ série temporelle
+    
+    \item
+    \mbox{\boldmath$y_j$} : point \in $Y = \langle y_1, ..., y_n \rangle$, $2^{e}$ série temporelle 
+\end{itemize}
+
+Cette fonction de coût, à la base de la solution par programmation dynamique, peut être formulée de manière récursive de la façon suivante :
+
+\begin{equation*}
+    DTW(i, j) = d(x_{i} , y_{j}) + min
+        \begin{cases}
+          DTW(i-1, j-1) & \text{si}\ \text{les 2 points correspondent} \\
+          
+          DTW(i-1, j) & \text{si}\  \text{ajouter le point $\nearrow$ correspondance}\\
+          
+          DTW(i, j-1) & \text{si}\ \text{supprimer le point $\nearrow$ correspondance}
+        \end{cases}
+\end{equation*}
+Où $DTW$ est une matrice de coût sauvegardant les solutions intermédiaires permettant à la fonction de s'y référer à chaque demande de résolution d'un sous-problème déjà rencontré. Elle rend donc possible l'avancement ascendant vers la solution finale correspondant au coût total pour aligner les 2 séries. Cela, en échangeant du temps de calcul contre de la mémoire, afin de transformer une possible solution du problème en temps exponentiel en la solution en temps polynomial présentée dans le cadre de ce projet.
+%Plus on observe $min = DTW(i-1, j-1)$, plus les séries sont initialement semblables, la fonction de coût  $d(x_i , y_i)$ a alors un impact moindre.
+\\
+\\
+\textit{source : \url{https://www.youtube.com/watch?v=9GdbMc4CEhE}}
+
+\subsection{Implémentation et complexité}
+Nous avons adopté une implémentation ascendante du Dynamic Time Wraping. Voici la complexité en temps et en espace de cette dernière :
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|c|}
+    \hline
+                        & Espace                  & Temps            \\
+    \hline   
+    
+    DynamicTimeWraping   & $\Theta(N.M)$       & $\Theta(N.M)$    \\
+    \hline
+    \end{tabular}
+    \caption{Complexité en espace et en temps}
+    \label{tab:complexity1}
+\end{table}
+
+Où $N$ et $M$ sont les longueurs des 2 séquences reçues en entrées. Ces complexités sont propres à notre implémentation, d'autres sont possibles avec des méthodes différentes.
+
+\section{NearestNeighbours}\\
+De multiples fonctions et opérations sont imbriquées dans NearestNeighbours. Vous trouverez dans chaque sous-section un résumé agrémenté d'un code couleur de leurs complexités en temps/espace qui sont toutes, quelque soit le cas, constantes :
+
+\subsection{\textbf{Complexité en temps}}\\
+    
+    \begin{itemize}
+    
+    \item \textcolor{violet}{DynamicTimeWraping :  $\Theta(q.l)$}\\
+    
+    \item \textcolor{purple}{bpqReplaceMaximum : $\Theta(log(k))$}\\
+    
+    \item \textcolor{olive}{bpqGetItems : $\Theta(k)$}\\
+    
+    \item \textcolor{teal}{Boucle for de remplissage du tableau de type SketchDistance : \Theta(k)}\\
+    
+    \end{itemize}
+    
+    (Opérations en $\Theta(1)$ volontairement omises)\\
+    
+    \begin{enumerate}
+    \item \textbf{Pire cas}\\
+    Si l'on néglige l’optimisation, ce qui donne une complexité constante pour DynamicTimeWraping, le pire cas correspond au cas où l'on trouve à chaque itération un croquis plus proche à ajouter dans la priority queue.
+    \begin{align*}
+    & \Theta(k).\textcolor{violet}{\Theta(q.l)} + \Theta(N-k).(\textcolor{violet}{\Theta(q.l)}+\textcolor{purple}{\Theta(log(k))}) + \textcolor{olive}{\Theta(k)} + \textcolor{teal}{\Theta(k)}\\
+    \Leftrightarrow & \Theta(N-k).(\textcolor{violet}{\Theta(q.l)} + \textcolor{purple}{\Theta(log(k))}) + \Theta(k).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & \Theta(N-k).\textcolor{violet}{\Theta(q.l)} + \Theta(k).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & ( \Theta(N-k)+\Theta(k)).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & \Theta(N).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & \Theta(N.q.l)
+    \end{align*}
+    
+    \item \textbf{Meilleur cas}\\
+    Si l'on néglige l’optimisation, ce qui donne une complexité constante pour DynamicTimeWraping, le meilleur cas correspond au cas où les k croquis les plus proches sont directement trouvés. Cette situation évite la mise à jour de la priority queue après k itérations mais n'empêche pas la calcul des distances des autres croquis de la base de données.
+    \begin{align*}
+    & \Theta(k).\textcolor{violet}{\Theta(q.l)} + \Theta(N-k).\textcolor{violet}{\Theta(q.l)} + \textcolor{olive}{\Theta(k)} + \textcolor{teal}{\Theta(k)}\\
+    \Leftrightarrow & \Theta(k).\textcolor{violet}{\Theta(q.l)} + \Theta(N-k).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & ( \Theta(N-k)+\Theta(k)).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & \Theta(N).\textcolor{violet}{\Theta(q.l)}\\
+    \Leftrightarrow & \Theta(N.q.l)
+    \end{align*}
+    \end{enumerate}
+    
+\subsection{\textbf{Complexité en espace}}\\
+    
+    \begin{itemize}
+    
+    \item \textcolor{violet}{DynamicTimeWraping :  $\Theta(q.l)$}\\
+    
+    \item \textcolor{purple}{bpqCreate : $\Theta(k)$}\\
+    
+    \item \textcolor{olive}{Tableau contenant les distances des croquis passant par la priority queue : $\Theta(N)$}\\
+    
+    \item \textcolor{teal}{bpqGetItems : \Theta(k)}\\
+    
+    \item \textcolor{brown}{Tableau de type SketchDistance : \Theta(k)}\\
+    
+    \end{itemize}
+    
+    (Opérations en $\Theta(1)$ volontairement omises)\\
+    
+    Si l'on néglige l’optimisation, ce qui donne une complexité constante pour DynamicTimeWraping, il n'y a pas de distinction entre pire et meilleur cas.\\
+    \begin{enumerate}
+    
+    \item \textbf{Pire et meilleur cas}\\
+    \begin{align*}
+    & \textcolor{purple}{\Theta(k)} + \textcolor{olive}{\Theta(N)} + \Theta(N.\textcolor{violet}{q.l}) + \textcolor{teal}{\Theta(k)} + \textcolor{brown}{\Theta(k)}\\
+    \Leftrightarrow & \Theta(\textcolor{purple}{k}+\textcolor{olive}{N}+N.\textcolor{violet}{q.l}+\textcolor{teal}{k}+\textcolor{brown}{k})\\
+    %\Leftrightarrow & \Theta(3.k+N.(q.l+1))
+    \Leftrightarrow & \Theta(N.q.l)
+    \end{align*}
+    
+    \end{enumerate}
+
+
+\section{Taux d'erreur}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{| c || c | c |}
+        \hline
+        Valeur k &  trainingset & trainingsetverylarge  \\
+        \hline
+        1        &  $17.40 \%$            &        $8.00 \%$            \\
+        \hline
+        3        &  $16.60 \%$            &       $8.80 \%$              \\
+        \hline
+        7        &  $18.60 \%$              &        $9.40 \%$             \\
+        \hline
+    \end{tabular}
+    \caption{Taux d'erreur pour différents k et 2 base de données}
+    \label{tab:error}
+\end{table}
+
+\section{Temps de calculs}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{| c || c | c |}
+        \hline
+        Valeur k &  trainingset & trainingsetverylarge  \\
+        \hline
+        1        &  4.906881              &        39.764447            \\
+        \hline
+        3        &  5.722580                  &          45.828936          \\
+        \hline
+        7        &  6.424147                  &           50.433319         \\
+        \hline
+    \end{tabular}
+    \caption{Temps de calculs pour différents k et 2 base de données en secondes [s]}
+    \label{tab:tps}
+\end{table}\\
+Ces résultats sont en accord avec la complexité théorique. Les paramètres $q$ et $l$ (correspondants respectivement au nombre de points du croquis à catégoriser et à la longueur des croquis de la base de données) étant supposés constants, on remarque la nette dépendance des temps de calculs vis à vis de $N$, le nombre d'échantillons de référence.\\
+
+On observe également une dépendance des temps de calculs par rapport au paramètre $k$, le nombre de voisins. Celui-ci est présent dans le calculs de la complexité théorique mais pas dans le résultat final. Cela s'explique en remarquant l'impacte minime qu'a ce paramètre comparé à $N$ :\\
+
+\begin{itemize}
+    \item Quand $N$ est multiplié par $10$, les temps de calculs sont approximativement augmentés de $800\%$
+    \item Quand $k$ est multiplié par $7$, les temps de calculs sont approximativement augmentés de $30\%$ pour trainingset et de $25\%$ pour trainingsetverylarge
+\end{itemize}
+ 
+
+\end{document}
